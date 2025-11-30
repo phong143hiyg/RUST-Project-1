@@ -71,20 +71,22 @@ impl RedBlackTree {
     pub fn rotate_left(&mut self, x: NodePtr) {
         let y = x.borrow().right.clone().unwrap();
         
-        x.borrow_mut().right = y.borrow().left.clone();
-        if let Some(ref y_left) = y.borrow().left {
-            y_left.borrow_mut().parent = Some(Rc::downgrade(&x));
+        let y_left = y.borrow().left.clone();
+        x.borrow_mut().right = y_left.clone();
+        if let Some(ref y_left_node) = y_left {
+            y_left_node.borrow_mut().parent = Some(Rc::downgrade(&x));
         }
 
-        y.borrow_mut().parent = x.borrow().parent.clone();
-        if x.borrow().parent.is_none() {
+        let x_parent = x.borrow().parent.clone();
+        y.borrow_mut().parent = x_parent.clone();
+        
+        if x_parent.is_none() {
             self.root = Some(y.clone());
         } else {
-            let parent_weak = x.borrow().parent.clone().unwrap();
-            let parent = parent_weak.upgrade().unwrap();
-            let left_child_is_x = parent.borrow().left.as_ref().map_or(false, |l| Rc::ptr_eq(l, &x));
+            let parent = x_parent.unwrap().upgrade().unwrap();
+            let is_x_left = parent.borrow().left.as_ref().map_or(false, |l| Rc::ptr_eq(l, &x));
             
-            if left_child_is_x {
+            if is_x_left {
                 parent.borrow_mut().left = Some(y.clone());
             } else {
                 parent.borrow_mut().right = Some(y.clone());
@@ -98,20 +100,22 @@ impl RedBlackTree {
     pub fn rotate_right(&mut self, x: NodePtr) {
         let y = x.borrow().left.clone().unwrap();
 
-        x.borrow_mut().left = y.borrow().right.clone();
-        if let Some(ref y_right) = y.borrow().right {
-            y_right.borrow_mut().parent = Some(Rc::downgrade(&x));
+        let y_right = y.borrow().right.clone();
+        x.borrow_mut().left = y_right.clone();
+        if let Some(ref y_right_node) = y_right {
+            y_right_node.borrow_mut().parent = Some(Rc::downgrade(&x));
         }
 
-        y.borrow_mut().parent = x.borrow().parent.clone();
-        if x.borrow().parent.is_none() {
+        let x_parent = x.borrow().parent.clone();
+        y.borrow_mut().parent = x_parent.clone();
+        
+        if x_parent.is_none() {
             self.root = Some(y.clone());
         } else {
-            let parent_weak = x.borrow().parent.clone().unwrap();
-            let parent = parent_weak.upgrade().unwrap();
-            let right_child_is_x = parent.borrow().right.as_ref().map_or(false, |r| Rc::ptr_eq(r, &x));
+            let parent = x_parent.unwrap().upgrade().unwrap();
+            let is_x_right = parent.borrow().right.as_ref().map_or(false, |r| Rc::ptr_eq(r, &x));
 
-            if right_child_is_x {
+            if is_x_right {
                 parent.borrow_mut().right = Some(y.clone());
             } else {
                 parent.borrow_mut().left = Some(y.clone());
@@ -169,7 +173,6 @@ fn main() {
                 }
             }
             "0" => {
-                println!("Tạm biệt!");
                 break;
             }
             _ => {

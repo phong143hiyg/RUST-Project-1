@@ -38,8 +38,13 @@ pub fn insert(tree: &mut RedBlackTree, val: i32) {
 // Hàm khôi phục tính chất cây [cite: 308-323]
 fn insert_fixup(tree: &mut RedBlackTree, mut k: NodePtr) {
     // Trong khi cha của k tồn tại và màu Đỏ
-    while let Some(parent_weak) = k.clone().borrow().parent.clone() {
-        let parent = parent_weak.upgrade().unwrap();
+    loop {
+        let parent_weak_opt = k.borrow().parent.clone();
+        if parent_weak_opt.is_none() {
+            break;
+        }
+        
+        let parent = parent_weak_opt.unwrap().upgrade().unwrap();
         if parent.borrow().color == Color::Black {
             break;
         }
@@ -60,7 +65,8 @@ fn insert_fixup(tree: &mut RedBlackTree, mut k: NodePtr) {
                 k = grandparent;
             } else {
                 // Case 2: Chú màu đen, k là con phải (Triangle) -> Xoay trái tại cha [cite: 204, 317]
-                if parent.borrow().right.as_ref().map_or(false, |r| Rc::ptr_eq(r, &k)) {
+                let is_k_right_child = parent.borrow().right.as_ref().map_or(false, |r| Rc::ptr_eq(r, &k));
+                if is_k_right_child {
                     k = parent.clone();
                     tree.rotate_left(k.clone());
                 }
@@ -70,7 +76,8 @@ fn insert_fixup(tree: &mut RedBlackTree, mut k: NodePtr) {
                 
                 new_parent.borrow_mut().color = Color::Black;
                 // Lấy lại ông (phải lấy từ parent mới vì cấu trúc đã thay đổi)
-                if let Some(gp_weak) = new_parent.borrow().parent.clone() {
+                let gp_weak_opt = new_parent.borrow().parent.clone();
+                if let Some(gp_weak) = gp_weak_opt {
                      let gp = gp_weak.upgrade().unwrap();
                      gp.borrow_mut().color = Color::Red;
                      tree.rotate_right(gp);
@@ -87,7 +94,8 @@ fn insert_fixup(tree: &mut RedBlackTree, mut k: NodePtr) {
                 k = grandparent;
             } else {
                 // Case 2: Chú đen, k là con trái -> Xoay phải tại cha
-                if parent.borrow().left.as_ref().map_or(false, |l| Rc::ptr_eq(l, &k)) {
+                let is_k_left_child = parent.borrow().left.as_ref().map_or(false, |l| Rc::ptr_eq(l, &k));
+                if is_k_left_child {
                     k = parent.clone();
                     tree.rotate_right(k.clone());
                 }
@@ -96,7 +104,8 @@ fn insert_fixup(tree: &mut RedBlackTree, mut k: NodePtr) {
                 let new_parent = new_parent_weak.upgrade().unwrap();
 
                 new_parent.borrow_mut().color = Color::Black;
-                if let Some(gp_weak) = new_parent.borrow().parent.clone() {
+                let gp_weak_opt = new_parent.borrow().parent.clone();
+                if let Some(gp_weak) = gp_weak_opt {
                     let gp = gp_weak.upgrade().unwrap();
                     gp.borrow_mut().color = Color::Red;
                     tree.rotate_left(gp);
